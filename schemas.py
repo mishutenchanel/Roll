@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict  # Добавляем ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import date
 from typing import Optional
 
@@ -21,4 +21,4 @@ class Roll(RollBase):
     date_added: date
     date_removed: Optional[date] = None
 
-    model_config = ConfigDict(from_attributes=True)  # Заменяем класс Config на model_config
+    model_config = ConfigDict(from_attributes=True)

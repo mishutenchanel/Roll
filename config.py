@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # Загружаем переменные окружения из файла .env
+load_dotenv()
 
 class Config:
-    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///site.db")  # URL базы данных
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///site.db") 
 

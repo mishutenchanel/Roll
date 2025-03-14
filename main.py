@@ -21,7 +21,6 @@ def get_db():
     try:
         yield db
     except SQLAlchemyError as e:
-        # Логируем или передаем конкретное сообщение об ошибке базы данных
         raise HTTPException(status_code=500, detail="Ошибка базы данных: " + str(e))
     finally:
         db.close()
@@ -48,7 +47,7 @@ def create_roll(roll: RollCreate, db: Session = Depends(get_db)):
         db_roll = Roll(
             length=roll.length,
             weight=roll.weight,
-            date_added=roll_date  # Устанавливаем дату добавления
+            date_added=roll_date
         )
         db.add(db_roll)
         db.commit()
@@ -75,7 +74,6 @@ def read_rolls(
 ):
     try:
         query = db.query(Roll)
-        # Применяем диапазоны фильтрации
         if id_min is not None:
             query = query.filter(Roll.id >= id_min)
         if id_max is not None:
@@ -102,7 +100,7 @@ def read_rolls(
     except SQLAlchemyError:
         raise HTTPException(status_code=500, detail="Ошибка при получении данных рулонов")
 
-
+# Получение статистики за указанный период
 @app.get("/stats/")
 def get_stats(
         start_date: date = Query(..., description="Начальная дата периода (YYYY-MM-DD)"),
@@ -134,6 +132,7 @@ def get_stats(
             Roll.date_removed <= end_date
         ).all()
 
+        # Расчет статистики
         for roll in rolls:
             interval_weight.append(roll.weight)
             interval_lenght.append(roll.length)
@@ -147,15 +146,11 @@ def get_stats(
                     intervals.append((roll.date_removed - roll.date_added).days)
 
         def sort_by_date(item):
-            # Если дата равна None, возвращаем максимально возможную дату, чтобы такие элементы оказались в конце
             if item[0] is None:
                 return date.max
             return item[0]
 
-        # Сортировка списка
         timeline = sorted(timeline, key=sort_by_date)
-        print(timeline)
-        print(' ')
 
         min_time = [start_date, end_date, float('inf')]
         max_time = [start_date, end_date, 1]
@@ -279,10 +274,10 @@ def update_roll(roll_id: int, roll_update: RollUpdate, db: Session = Depends(get
             raise HTTPException(status_code=422, detail="не корректная дата, удаление должно быть позже добавления")
 
 
+# Удаление всех записей в таблице
 @app.delete("/rolls/clear/", response_model=dict)
 def clear_rolls(db: Session = Depends(get_db)):
     try:
-        # Удаляем все записи из таблицы Roll
         db.query(Roll).delete()
         db.commit()
         return {"message": "Все записи в таблице Roll были успешно удалены."}
