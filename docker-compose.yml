@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DOCKER_ENV=true
+    env_file:
+      - .env.docker  # Используем .env.docker для Docker
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    env_file:
+      - .env.docker  # Используем .env.docker для настроек базы данных
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  tests:
+    build: .
+    volumes:
+      - .:/app
+    env_file:
+      - .env.docker
+    depends_on:
+      - db
+    command: >
+      sh -c "python -m pytest tests/"
+
+volumes:
+  postgres_data:

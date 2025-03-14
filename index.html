@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление рулонами</title>
+    <style>
+        /* Стили для кнопки в правом нижнем углу */
+        #clearTableButton {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #clearTableButton:hover {
+            background-color: #cc0000;
+        }
+    </style>
+    <script>
+        async function sendRequest(url, method = "GET", body = null) {
+            const options = { 
+                method, 
+                headers: { "Content-Type": "application/json" }
+            };
+            if (body) options.body = JSON.stringify(body);
+
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                document.getElementById("output").innerText = `Статус: ${response.status}\n\n` + JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById("output").innerText = `Ошибка запроса: ${error}`;
+            }
+        }
+
+        function createRoll() {
+            const length = document.getElementById("rollLength").value || null;
+            const weight = document.getElementById("rollWeight").value || null;
+            const date_added = document.getElementById("rollDate").value || null;
+
+            sendRequest("/rolls/", "POST", { length, weight, date_added });
+        }
+
+        function getRolls() {
+            const params = new URLSearchParams();
+
+            const filters = {
+                id_min: document.getElementById("idMin").value,
+                id_max: document.getElementById("idMax").value,
+                weight_min: document.getElementById("weightMin").value,
+                weight_max: document.getElementById("weightMax").value,
+                length_min: document.getElementById("lengthMin").value,
+                length_max: document.getElementById("lengthMax").value,
+                date_added_min: document.getElementById("dateAddedMin").value,
+                date_added_max: document.getElementById("dateAddedMax").value,
+                date_removed_min: document.getElementById("dateRemovedMin").value,
+                date_removed_max: document.getElementById("dateRemovedMax").value
+            };
+
+            for (const key in filters) {
+                if (filters[key]) {
+                    params.append(key, filters[key]);
+                }
+            }
+
+            const queryString = params.toString() ? `?${params.toString()}` : "";
+            sendRequest(`/rolls/${queryString}`);
+        }
+
+        function getStats() {
+            const start_date = document.getElementById("statStart").value || null;
+            const end_date = document.getElementById("statEnd").value || null;
+
+            const params = new URLSearchParams();
+            if (start_date) params.append("start_date", start_date);
+            if (end_date) params.append("end_date", end_date);
+
+            const queryString = params.toString() ? `?${params.toString()}` : "";
+            sendRequest(`/stats/${queryString}`);
+        }
+
+        function deleteRoll() {
+            const roll_id = document.getElementById("deleteRollId").value || null;
+            const date_removed = document.getElementById("deleteDate").value || null;
+
+            sendRequest(`/rolls/${roll_id}`, "PATCH", { date_removed });
+        }
+
+        // Функция для очистки таблицы
+        function clearTable() {
+            if (confirm("Вы уверены, что хотите очистить всю таблицу? Это действие нельзя отменить.")) {
+                sendRequest("/rolls/clear/", "DELETE");
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Управление рулонами</h1>
+
+    <h2>Создать рулон</h2>
+    <label>Длина: <input type="number" id="rollLength" step="0.01"></label>
+    <label>Вес: <input type="number" id="rollWeight" step="0.01"></label>
+    <label>Дата добавления: <input type="date" id="rollDate"></label>
+    <button onclick="createRoll()">Создать</button>
+
+    <h2>Получить список рулонов</h2>
+    <label>ID min: <input type="number" id="idMin"></label>
+    <label>ID max: <input type="number" id="idMax"></label>
+    <label>Вес min: <input type="number" id="weightMin" step="0.01"></label>
+    <label>Вес max: <input type="number" id="weightMax" step="0.01"></label>
+    <label>Длина min: <input type="number" id="lengthMin" step="0.01"></label>
+    <label>Длина max: <input type="number" id="lengthMax" step="0.01"></label>
+    <label>Дата добавления min: <input type="date" id="dateAddedMin"></label>
+    <label>Дата добавления max: <input type="date" id="dateAddedMax"></label>
+    <label>Дата удаления min: <input type="date" id="dateRemovedMin"></label>
+    <label>Дата удаления max: <input type="date" id="dateRemovedMax"></label>
+    <button onclick="getRolls()">Получить</button>
+
+    <h2>Получить статистику</h2>
+    <label>Начальная дата: <input type="date" id="statStart"></label>
+    <label>Конечная дата: <input type="date" id="statEnd"></label>
+    <button onclick="getStats()">Получить</button>
+
+    <h2>Удалить рулон</h2>
+    <label>ID рулона: <input type="number" id="deleteRollId"></label>
+    <label>Дата удаления: <input type="date" id="deleteDate"></label>
+    <button onclick="deleteRoll()">Удалить</button>
+
+    <h2>Вывод</h2>
+    <pre id="output"></pre>
+
+    <!-- Кнопка для очистки таблицы -->
+    <button id="clearTableButton" onclick="clearTable()">Очистить таблицу с данными</button>
+</body>
+</html>
